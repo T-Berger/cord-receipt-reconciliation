@@ -1,0 +1,262 @@
+{
+  "dataset": "naver-clova-ix/cord-v2",
+  "split": "train",
+  "row_index": 9,
+  "claim": {
+    "claim_id": "DEMO-CLAIM-17",
+    "employee_id": "Synthetic employee",
+    "business_purpose": "Customer meeting refreshments",
+    "category": "meals",
+    "currency": "IDR",
+    "items": [
+      {
+        "name": "THAI ICED TEA",
+        "quantity": "2",
+        "claimed_amount": "40000"
+      }
+    ],
+    "claimed_subtotal": "40000",
+    "claimed_total": "100000",
+    "payment_method": "cash",
+    "injected_scenario": "claimed_cash_tendered"
+  },
+  "receipt": {
+    "currency": "IDR",
+    "items": [
+      {
+        "name": "THAI ICED TEA",
+        "quantity": "2",
+        "unit_price": "20000",
+        "line_total": "40000"
+      }
+    ],
+    "subtotal": "40000",
+    "total_paid": "40000",
+    "payment_method": "cash",
+    "cash_tendered": "100000",
+    "change": "60000"
+  },
+  "decision": {
+    "status": "partially_approved",
+    "claimed_amount": "100000",
+    "reimbursable_amount": "40000",
+    "summary": "Partially approved for IDR 40,000; the remainder is unsupported or excluded by policy.",
+    "findings": [
+      {
+        "rule_id": "CLAIM_TOTAL_MISMATCH",
+        "severity": "error",
+        "message": "The claimed total exceeds the receipt's final purchase total.",
+        "receipt_field": "total_paid",
+        "claimed_value": "100000",
+        "evidence_value": "40000"
+      },
+      {
+        "rule_id": "CHANGE_NOT_REIMBURSABLE",
+        "severity": "error",
+        "message": "Change returned to the employee is not an expense.",
+        "receipt_field": "change",
+        "claimed_value": "100000",
+        "evidence_value": "60000"
+      },
+      {
+        "rule_id": "CASH_TENDERED_NOT_REIMBURSABLE",
+        "severity": "error",
+        "message": "Cash tendered is not the purchase cost; only the final total is reimbursable.",
+        "receipt_field": "cash_tendered",
+        "claimed_value": "100000",
+        "evidence_value": "40000"
+      },
+      {
+        "rule_id": "UNSUPPORTED_CLAIM_COMPONENT",
+        "severity": "error",
+        "message": "Part of the claimed total is not explained by supported items, tax, or service.",
+        "receipt_field": "claimed_total",
+        "claimed_value": "60000",
+        "evidence_value": "0"
+      }
+    ]
+  },
+  "review": {
+    "state": "Ready for finance review",
+    "reviewer": "Unassigned",
+    "evidence_state": "Complete",
+    "extractor_agreement": "Full agreement",
+    "additional_evidence_required": false,
+    "recommended_action": "Approve recommended amount",
+    "checklist": [
+      "Receipt evidence is present",
+      "Mistral and Docling agree on critical fields",
+      "Returned change is excluded",
+      "Reimbursement is capped at the receipt total"
+    ]
+  },
+  "extractions": [
+    {
+      "engine": "mistral",
+      "label": "Mistral OCR",
+      "model": "mistral-ocr-latest",
+      "matched_fields": 11,
+      "compared_fields": 11,
+      "field_accuracy": 1.0,
+      "strategy": "deterministic guardrail fallback",
+      "total_paid": "40000",
+      "change": "60000"
+    },
+    {
+      "engine": "docling",
+      "label": "Docling OCR + Mistral",
+      "model": "docling + mistral-small-latest",
+      "matched_fields": 11,
+      "compared_fields": 11,
+      "field_accuracy": 1.0,
+      "strategy": "deterministic guardrail fallback",
+      "total_paid": "40000",
+      "change": "60000"
+    }
+  ],
+  "ocr_inspector": {
+    "access_label": "Owner-only demo evidence",
+    "disclosure": "This control displays a sanitized OCR transcript already delivered to this authenticated browser. Reveal and hide are display controls, not additional authorization checks. Reveal events are not separately audit-logged.",
+    "quality": {
+      "ground_truth_checks": "22 / 22",
+      "normalized_disagreements": 0,
+      "native_confidence": "Not provided",
+      "note": "Agreement is comparison evidence, not a model probability."
+    },
+    "engines": [
+      {
+        "id": "mistral",
+        "label": "Mistral OCR",
+        "model": "mistral-ocr-latest",
+        "format": "Sanitized Markdown transcript",
+        "raw_text": "THAI ICED TEA\n2 @20.000 40.000\nSUB-TOTAL 40.000\nGRANDTOTAL 40.000\nCASH 100.000\nCHANGED 60.000"
+      },
+      {
+        "id": "docling",
+        "label": "Docling OCR + Mistral structuring",
+        "model": "docling + mistral-small-latest",
+        "format": "Sanitized Markdown transcript",
+        "raw_text": "THAI ICED TEA\n2\n@20.000\nSUB-TOTAL\nGRANDTOTAL\nCASH CHANGED\n40.000\n40.000\n40.000\n100.000\n60.000"
+      }
+    ],
+    "mappings": [
+      {
+        "id": "item_line",
+        "field": "Item line",
+        "mistral_raw": "THAI ICED TEA · 2 @20.000 40.000",
+        "docling_raw": "THAI ICED TEA · 2 · @20.000 · 40.000",
+        "normalized": "2 × THAI ICED TEA · IDR 20,000 · IDR 40,000",
+        "status": "Agrees after normalization",
+        "mistral_lines": [0, 1],
+        "docling_lines": [0, 1, 2, 6],
+        "region_top": 39,
+        "region_height": 9
+      },
+      {
+        "id": "subtotal",
+        "field": "Subtotal",
+        "mistral_raw": "SUB-TOTAL 40.000",
+        "docling_raw": "SUB-TOTAL · 40.000",
+        "normalized": "IDR 40,000",
+        "status": "Agrees after normalization",
+        "mistral_lines": [2],
+        "docling_lines": [3, 7],
+        "region_top": 50,
+        "region_height": 7
+      },
+      {
+        "id": "total_paid",
+        "field": "Total paid",
+        "mistral_raw": "GRANDTOTAL 40.000",
+        "docling_raw": "GRANDTOTAL · 40.000",
+        "normalized": "IDR 40,000",
+        "status": "Agrees after normalization",
+        "mistral_lines": [3],
+        "docling_lines": [4, 8],
+        "region_top": 57,
+        "region_height": 8
+      },
+      {
+        "id": "cash_tendered",
+        "field": "Cash tendered",
+        "mistral_raw": "CASH 100.000",
+        "docling_raw": "CASH · 100.000",
+        "normalized": "IDR 100,000",
+        "status": "Agrees after normalization",
+        "mistral_lines": [4],
+        "docling_lines": [5, 9],
+        "region_top": 65,
+        "region_height": 7
+      },
+      {
+        "id": "change",
+        "field": "Change",
+        "mistral_raw": "CHANGED 60.000",
+        "docling_raw": "CHANGED · 60.000",
+        "normalized": "IDR 60,000",
+        "status": "Agrees after normalization",
+        "mistral_lines": [5],
+        "docling_lines": [5, 10],
+        "region_top": 71,
+        "region_height": 7
+      }
+    ],
+    "normalization_notes": [
+      "A dot followed by three digits is treated as Indonesian thousands grouping.",
+      "Payment method cash is inferred from the printed CASH label.",
+      "Currency IDR is defaulted during normalization; it is not printed on this receipt.",
+      "Receipt anchors are layout references, not provider bounding boxes."
+    ]
+  },
+  "evaluated_fields": [
+    "currency",
+    "subtotal",
+    "total_paid",
+    "payment_method",
+    "cash_tendered",
+    "change",
+    "items.count",
+    "items[0].name",
+    "items[0].quantity",
+    "items[0].unit_price",
+    "items[0].line_total"
+  ],
+  "trace": {
+    "run_label": "Demo run 17",
+    "langfuse_enabled": true,
+    "observation_count": 10,
+    "successful_observations": 10,
+    "score_count": 8,
+    "accepted_scores": 8,
+    "error_count": 0,
+    "workflow_duration": "88.55s",
+    "semantic_evaluations": 4,
+    "remote_observation_ids": 10,
+    "backend_verified": true,
+    "backend_observation_count": 10,
+    "backend_score_count": 8,
+    "latency": [
+      { "label": "CORD fetch", "duration": "1.03s", "percent": 1.17 },
+      { "label": "Mistral OCR", "duration": "8.99s", "percent": 10.15 },
+      { "label": "Docling pipeline", "duration": "78.29s", "percent": 88.42 },
+      { "label": "Other stages", "duration": "<0.1s", "percent": 0.26 }
+    ],
+    "evaluations": [
+      { "label": "Mistral fields", "value": "100%", "detail": "11 / 11 match" },
+      { "label": "Docling fields", "value": "100%", "detail": "11 / 11 match" },
+      { "label": "Decision status", "value": "Pass", "detail": "Expected = actual" },
+      { "label": "Decision amount", "value": "Pass", "detail": "IDR 40,000" }
+    ],
+    "stages": [
+      { "name": "cord-dataset-fetch", "type": "span", "status": "success", "duration": "1.03s" },
+      { "name": "synthetic-claim-generation", "type": "span", "status": "success", "duration": "7ms" },
+      { "name": "mistral-ocr-and-structured-extraction", "type": "generation", "status": "success", "duration": "8.99s" },
+      { "name": "docling-ocr-and-mistral-structured-extraction", "type": "generation", "status": "success", "duration": "78.29s" },
+      { "name": "mistral-ground-truth-comparison", "type": "span", "status": "success", "duration": "12ms" },
+      { "name": "docling-ground-truth-comparison", "type": "span", "status": "success", "duration": "12ms" },
+      { "name": "expected-policy-decision", "type": "chain", "status": "success", "duration": "12ms" },
+      { "name": "workflow-policy-decision", "type": "chain", "status": "success", "duration": "19ms" },
+      { "name": "decision-evaluation", "type": "evaluator", "status": "success", "duration": "29ms" }
+    ]
+  }
+}

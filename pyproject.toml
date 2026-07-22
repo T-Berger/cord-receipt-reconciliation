@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cord-receipt-reconciliation"
+version = "0.1.0"
+description = "Receipt reconciliation with CORD v2, Mistral OCR, Docling, and Langfuse"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "docling>=2.67.0,<3",
+  "httpx>=0.28.1,<1",
+  "langfuse>=4.7.0,<5",
+  "mistralai>=2.4.12,<3",
+  "pydantic>=2.12,<3",
+  "python-dotenv>=1.1,<2",
+  "truststore>=0.10,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4,<10",
+  "pytest-cov>=6.2,<8",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+receipt-reconcile = "receipt_reconciliation.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/receipt_reconciliation"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

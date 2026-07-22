@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.py[cod]
+
+# The live Sites checkout has its own Git history. `web-dashboard/` is the
+# clean export intended for this public repository.
+dashboard/
+
+# JavaScript / exported dashboard
+web-dashboard/node_modules/
+web-dashboard/.next/
+web-dashboard/dist/
+web-dashboard/.vinext/
+web-dashboard/.wrangler/
+web-dashboard/outputs/
+web-dashboard/work/
+web-dashboard/.env*
+web-dashboard/.openai/
+web-dashboard/*.tsbuildinfo
+
+# Runtime evidence can contain receipt or trace data. Publish only the
+# explicitly sanitized GIF used by the README.
+artifacts/*
+!artifacts/dashboard-demo/
+artifacts/dashboard-demo/*
+!artifacts/dashboard-demo/receipt-review-demo.gif
+
+# Local communication and internal handoff notes are not part of the public project.
+LINKEDIN_POST.md
+SUBAGENT_QA.md
