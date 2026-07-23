@@ -32,11 +32,12 @@ web-dashboard/.openai/
 web-dashboard/*.tsbuildinfo
 
 # Runtime evidence can contain receipt or trace data. Publish only the
-# explicitly sanitized GIF used by the README.
+# explicitly sanitized README media.
 artifacts/*
 !artifacts/dashboard-demo/
 artifacts/dashboard-demo/*
 !artifacts/dashboard-demo/receipt-review-demo.gif
+!artifacts/dashboard-demo/receipt-review-demo-poster.png
 
 # Local communication and internal handoff notes are not part of the public project.
 LINKEDIN_POST.md
