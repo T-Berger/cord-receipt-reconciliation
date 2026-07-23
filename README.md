@@ -6,6 +6,10 @@ A production-oriented OCR reference workflow created from Challenge 1 at
 **Bring OCR to Production with Mistral & Langfuse**, held at Tacto in Munich on
 July 21, 2026.
 
+The workshop offered two separate tracks: receipt reconciliation and order
+availability across business documents. This repository contains only the
+**Challenge 1 receipt-reconciliation implementation**.
+
 ![Receipt reconciliation decision: IDR 100,000 claimed and IDR 40,000 reimbursable](artifacts/dashboard-demo/receipt-review-demo-poster.png)
 
 ## The challenge
