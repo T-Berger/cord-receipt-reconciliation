@@ -1,19 +1,88 @@
 # CORD v2 Receipt Reconciliation
 
-A runnable expense-review challenge built on the
-[CORD v2 receipt dataset](https://huggingface.co/datasets/naver-clova-ix/cord-v2).
-It downloads a real receipt and its ground-truth JSON, creates a reproducible
-synthetic claim, extracts the receipt with Mistral OCR and Docling, applies an
-auditable reimbursement policy, and evaluates every result against ground truth.
+[![CI/CD](https://github.com/T-Berger/cord-receipt-reconciliation/actions/workflows/pipeline.yml/badge.svg)](https://github.com/T-Berger/cord-receipt-reconciliation/actions/workflows/pipeline.yml)
 
-![CORD v2 receipt reconciliation workflow](artifacts/dashboard-demo/receipt-review-demo.gif)
+A production-oriented OCR reference workflow created from Challenge 1 at
+**Bring OCR to Production with Mistral & Langfuse**, held at Tacto in Munich on
+July 21, 2026.
 
-The GIF follows one claim through the complete workflow: the CORD receipt and
-synthetic claim enter two extraction paths, monetary evidence is normalized,
-policy controls exclude cash change from the expense, and the final decision is
-evaluated and traced in Langfuse. In the demonstrated case, IDR 100,000 was
-claimed, IDR 40,000 was supported by the receipt, and IDR 60,000 was returned as
-change, so the workflow recommends a partial reimbursement of IDR 40,000.
+![Receipt reconciliation decision: IDR 100,000 claimed and IDR 40,000 reimbursable](artifacts/dashboard-demo/receipt-review-demo-poster.png)
+
+## The challenge
+
+The workshop challenge uses the
+[CORD v2 receipt dataset](https://huggingface.co/datasets/naver-clova-ix/cord-v2)
+to answer a business question that raw text extraction cannot solve by itself:
+
+> How much of an expense claim is actually supported by the receipt, and can
+> every adjustment be explained and traced?
+
+The required outcome is **approve, partially approve, reject, or escalate**. If
+the claim is not fully approved, the workflow must identify the reimbursable
+amount, mismatched receipt field, triggered policy rule, and any additional
+evidence needed.
+
+The demonstrated case uses CORD v2 `train/9`, a receipt for two Thai iced teas:
+
+| Receipt evidence | Amount |
+| --- | ---: |
+| Purchase total | IDR 40,000 |
+| Cash tendered | IDR 100,000 |
+| Change returned | IDR 60,000 |
+| Synthetic claim | IDR 100,000 |
+
+All four values can be extracted correctly, but reimbursing the cash tendered
+amount would still be wrong. The supported expense is the purchase total:
+**IDR 40,000**.
+
+## What I built
+
+The repository turns that case into a reproducible, observable workflow:
+
+1. **Load evidence** — download a real CORD receipt and normalize its
+   ground-truth JSON.
+2. **Create a test claim** — inject a seeded, repeatable inconsistency such as
+   claiming cash tendered instead of the purchase total.
+3. **Extract twice** — run Mistral OCR and compare it with a local Docling OCR
+   path.
+4. **Normalize semantics** — keep purchase total, tax, discount, cash tendered,
+   and change as separate fields.
+5. **Apply policy** — calculate the reimbursable amount with deterministic
+   reason codes instead of asking the OCR model to make the financial decision.
+6. **Trace and evaluate** — record extraction, transformations, policy results,
+   and task-level scores with Langfuse-compatible observability.
+7. **Review the result** — present the evidence, variance, model comparison, and
+   trace in a sanitized dashboard.
+
+## Demonstrated result
+
+- **Decision:** partially approved
+- **Claimed:** IDR 100,000
+- **Reimbursable:** IDR 40,000
+- **Excluded:** IDR 60,000 returned as change
+- **Reason codes:** `CLAIM_TOTAL_MISMATCH`, `CHANGE_NOT_REIMBURSABLE`, and
+  `CASH_TENDERED_NOT_REIMBURSABLE`
+- **Extraction check:** both paths matched all 11 populated normalized CORD
+  fields in this receipt
+
+No additional evidence is needed for the supported IDR 40,000; a corrected
+claim is needed for full administrative reconciliation. This is one worked
+example, not a dataset-wide accuracy benchmark.
+
+The live run authenticated with Langfuse, flushed successfully, and was read
+back through the Langfuse API with all 10 observations and eight evaluation
+scores persisted. Runtime reports and traces stay local because they may contain
+receipt evidence; only the sanitized media below is published.
+
+## Workflow walkthrough
+
+![Animated CORD v2 receipt reconciliation workflow](artifacts/dashboard-demo/receipt-review-demo.gif)
+
+The animation follows the receipt and synthetic claim through both extraction
+paths, semantic normalization, policy controls, the final reimbursement
+decision, and Langfuse evaluation.
+
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -29,31 +98,6 @@ flowchart LR
     P --> E
     E --> L["Langfuse observations + scores"]
 ```
-
-## Demonstrated result
-
-The checked-in workflow was run live on CORD v2 `train/9`, a receipt for two
-Thai iced teas. The receipt shows:
-
-- item/subtotal/final total: IDR 40,000
-- cash tendered: IDR 100,000
-- change returned: IDR 60,000
-
-The injected claim intentionally requests the cash tendered amount (IDR
-100,000). The result is **partially approved for IDR 40,000**. The triggered
-rules are `CLAIM_TOTAL_MISMATCH`, `CHANGE_NOT_REIMBURSABLE`, and
-`CASH_TENDERED_NOT_REIMBURSABLE`. No further evidence is needed for the supported
-IDR 40,000; a corrected claim is needed for full administrative reconciliation.
-
-For this receipt, both Mistral and Docling matched all 11 populated normalized
-CORD fields. This is a single worked example, not a dataset-wide accuracy claim.
-The current machine-readable outputs are written locally to
-`artifacts/langfuse-live/report.json` and `artifacts/langfuse-live/trace.json`.
-These runtime evidence files stay local by design and are excluded from Git;
-only the sanitized GIF and poster are published.
-This run authenticated with Langfuse, flushed successfully, and was read back
-through the Langfuse API as trace `bbe2b65c4246e77388348b14c5a934d2` with all
-10 observations and eight evaluation scores persisted.
 
 ## Setup
 
